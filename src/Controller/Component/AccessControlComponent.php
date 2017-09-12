@@ -11,6 +11,7 @@ use Firebase\JWT\JWT;
 use RestApi\Routing\Exception\InvalidTokenException;
 use RestApi\Routing\Exception\InvalidTokenFormatException;
 use RestApi\Routing\Exception\MissingTokenException;
+use RestApi\Routing\Exception\ExpiredTokenException;
 
 /**
  * Access control component class.
@@ -72,6 +73,14 @@ class AccessControlComponent extends Component
             throw new MissingTokenException();
         }
 
+        if (!empty($this->request->query('fingerprint'))) {
+            $fingerprint = $this->request->query('fingerprint');
+        } elseif (!empty($request->data['fingerprint'])) {
+            $fingerprint = $request->data['fingerprint'];
+        } else {
+            throw new MissingFingerprintException();
+        }
+
         try {
             $payload = JWT::decode($token, Configure::read('ApiRequest.jwtAuth.cypherKey'), [Configure::read('ApiRequest.jwtAuth.tokenAlgorithm')]);
         } catch (\Exception $e) {
@@ -82,13 +91,28 @@ class AccessControlComponent extends Component
             throw new InvalidTokenException();
         }
 
+        if(isset($payload->expireAt)){
+            if(time() > $payload->expireAt){
+                throw new ExpiredTokenException();
+            }
+        }
+
+        if(isset($payload->fingerprint)){
+            if($payload->fingerprint != md5($fingerprint.$token.md5($token.$fingerprint)){
+                throw new InvalidFingerprintException();
+            }
+        }
+
         $controller = $this->_registry->getController();
 
         $controller->jwtPayload = $payload;
 
         $controller->jwtToken = $token;
 
+        $controller->fingerprint = $fingerprint;
+
         Configure::write('accessToken', $token);
+        Configure::write('accessFingerprint', $fingerprint);
 
         return true;
     }

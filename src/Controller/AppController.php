@@ -5,6 +5,7 @@ namespace RestApi\Controller;
 use Cake\Controller\Controller;
 use Cake\Core\Configure;
 use Cake\Event\Event;
+use RestApi\Utility\JwtToken;
 
 /**
  * Application Controller
@@ -65,20 +66,21 @@ class AppController extends Controller
         parent::initialize();
 
         $this->responseFormat = [
-            'statusKey' => (null !== Configure::read('ApiRequest.responseFormat.statusKey')) ? Configure::read('ApiRequest.responseFormat.statusKey') : 'status',
-            'statusOkText' => (null !== Configure::read('ApiRequest.responseFormat.statusOkText')) ? Configure::read('ApiRequest.responseFormat.statusOkText') : 'OK',
-            'statusNokText' => (null !== Configure::read('ApiRequest.responseFormat.statusNokText')) ? Configure::read('ApiRequest.responseFormat.statusNokText') : 'NOK',
-            'resultKey' => (null !== Configure::read('ApiRequest.responseFormat.resultKey')) ? Configure::read('ApiRequest.responseFormat.resultKey') : 'result',
-            'messageKey' => (null !== Configure::read('ApiRequest.responseFormat.messageKey')) ? Configure::read('ApiRequest.responseFormat.messageKey') : 'message',
-            'defaultMessageText' => (null !== Configure::read('ApiRequest.responseFormat.defaultMessageText')) ? Configure::read('ApiRequest.responseFormat.defaultMessageText') : 'Empty response!',
-            'errorKey' => (null !== Configure::read('ApiRequest.responseFormat.errorKey')) ? Configure::read('ApiRequest.responseFormat.errorKey') : 'error',
-            'defaultErrorText' => (null !== Configure::read('ApiRequest.responseFormat.defaultErrorText')) ? Configure::read('ApiRequest.responseFormat.defaultErrorText') : 'Unknown request!'
+        'statusKey' => (null !== Configure::read('ApiRequest.responseFormat.statusKey')) ? Configure::read('ApiRequest.responseFormat.statusKey') : 'status',
+        'statusOkText' => (null !== Configure::read('ApiRequest.responseFormat.statusOkText')) ? Configure::read('ApiRequest.responseFormat.statusOkText') : 'OK',
+        'statusNokText' => (null !== Configure::read('ApiRequest.responseFormat.statusNokText')) ? Configure::read('ApiRequest.responseFormat.statusNokText') : 'NOK',
+        'resultKey' => (null !== Configure::read('ApiRequest.responseFormat.resultKey')) ? Configure::read('ApiRequest.responseFormat.resultKey') : 'result',
+        'messageKey' => (null !== Configure::read('ApiRequest.responseFormat.messageKey')) ? Configure::read('ApiRequest.responseFormat.messageKey') : 'message',
+        'defaultMessageText' => (null !== Configure::read('ApiRequest.responseFormat.defaultMessageText')) ? Configure::read('ApiRequest.responseFormat.defaultMessageText') : 'Empty response!',
+        'errorKey' => (null !== Configure::read('ApiRequest.responseFormat.errorKey')) ? Configure::read('ApiRequest.responseFormat.errorKey') : 'error',
+        'defaultErrorText' => (null !== Configure::read('ApiRequest.responseFormat.defaultErrorText')) ? Configure::read('ApiRequest.responseFormat.defaultErrorText') : 'Unknown request!'
         ];
 
         $this->responseStatus = $this->responseFormat['statusOkText'];
 
         $this->loadComponent('RequestHandler');
         $this->loadComponent('RestApi.AccessControl');
+        $this->loadComponent('RestApi.PermissionControl');
     }
 
     /**
@@ -98,11 +100,19 @@ class AppController extends Controller
         }
 
         $response = [
-            $this->responseFormat['statusKey'] => $this->responseStatus
+        $this->responseFormat['statusKey'] => $this->responseStatus
         ];
 
         if (!empty($this->apiResponse)) {
             $response[$this->responseFormat['resultKey']] = $this->apiResponse;
+        }
+
+        if($this->jwtToken){
+            $issuedAt = time();
+            $issuedAt = $issuedAt + 10;
+            $expireAt = $issuedAt + Configure::read('ApiRequest.jwtAuth.expires'); 
+            $payload = ['fingerprint' => $this->fingerprint, 'issuedAt' => $issuedAt, 'expireAt' => $expireAt, 'id' => $this->jwtPayload->id, 'name' => $this->jwtPayload->name];
+            $response['token'] = JwtToken::generateToken($payload);
         }
 
         $this->set('response', $response);

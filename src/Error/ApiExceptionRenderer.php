@@ -42,6 +42,11 @@ class ApiExceptionRenderer extends ExceptionRenderer
         return $this->__prepareResponse($exception, ['customMessage' => true]);
     }
 
+    public function missingFingerprint($exception)
+    {
+        return $this->__prepareResponse($exception, ['customMessage' => true]);
+    }
+
     /**
      * Handles InvalidTokenFormatException.
      *
