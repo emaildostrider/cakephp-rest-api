@@ -56,6 +56,8 @@ class AppController extends Controller
      */
     public $jwtToken = "";
 
+    public $fingerprint = "";
+
     /**
      * Initialization hook method.
      *
@@ -80,7 +82,6 @@ class AppController extends Controller
 
         $this->loadComponent('RequestHandler');
         $this->loadComponent('RestApi.AccessControl');
-        $this->loadComponent('RestApi.PermissionControl');
     }
 
     /**
@@ -111,7 +112,7 @@ class AppController extends Controller
             $issuedAt = time();
             $issuedAt = $issuedAt + 10;
             $expireAt = $issuedAt + Configure::read('ApiRequest.jwtAuth.expires'); 
-            $payload = ['fingerprint' => $this->fingerprint, 'issuedAt' => $issuedAt, 'expireAt' => $expireAt, 'id' => $this->jwtPayload->id, 'name' => $this->jwtPayload->name];
+            $payload = ['encriptedFingerprint' => $this->fingerprint, 'issuedAt' => $issuedAt, 'expireAt' => $expireAt, 'id' => $this->jwtPayload->id, 'name' => $this->jwtPayload->name];
             $response['token'] = JwtToken::generateToken($payload);
         }
 

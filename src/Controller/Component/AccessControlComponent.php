@@ -9,8 +9,10 @@ use Cake\Network\Exception\UnauthorizedException;
 use Cake\Network\Response;
 use Firebase\JWT\JWT;
 use RestApi\Routing\Exception\InvalidTokenException;
+use RestApi\Routing\Exception\InvalidFingerprintException;
 use RestApi\Routing\Exception\InvalidTokenFormatException;
 use RestApi\Routing\Exception\MissingTokenException;
+use RestApi\Routing\Exception\MissingFingerprintException;
 use RestApi\Routing\Exception\ExpiredTokenException;
 
 /**
@@ -73,7 +75,11 @@ class AccessControlComponent extends Component
             throw new MissingTokenException();
         }
 
-        if (!empty($this->request->query('fingerprint'))) {
+        $fingerprintHeader = $this->request->header('fingerprint');
+
+        if (!empty($fingerprintHeader)) {
+            $fingerprint = $fingerprintHeader;
+        } elseif (!empty($this->request->query('fingerprint'))) {
             $fingerprint = $this->request->query('fingerprint');
         } elseif (!empty($request->data['fingerprint'])) {
             $fingerprint = $request->data['fingerprint'];
@@ -97,10 +103,12 @@ class AccessControlComponent extends Component
             }
         }
 
-        if(isset($payload->fingerprint)){
-            if($payload->fingerprint != md5($fingerprint.$token.md5($token.$fingerprint)){
+        if(isset($payload->encriptedFingerprint)){
+            $encriptedFingerprint = md5(Configure::read('ApiRequest.jwtAuth.cypherKey').$fingerprint); 
+            if($payload->encriptedFingerprint != $encriptedFingerprint){
                 throw new InvalidFingerprintException();
             }
+            $controller->fingerprint = $encriptedFingerprint;
         }
 
         $controller = $this->_registry->getController();
@@ -109,7 +117,7 @@ class AccessControlComponent extends Component
 
         $controller->jwtToken = $token;
 
-        $controller->fingerprint = $fingerprint;
+        
 
         Configure::write('accessToken', $token);
         Configure::write('accessFingerprint', $fingerprint);
