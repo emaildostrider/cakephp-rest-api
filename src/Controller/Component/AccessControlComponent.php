@@ -103,6 +103,8 @@ class AccessControlComponent extends Component
             }
         }
 
+        $controller = $this->_registry->getController();
+
         if(isset($payload->encriptedFingerprint)){
             $encriptedFingerprint = md5(Configure::read('ApiRequest.jwtAuth.cypherKey').$fingerprint); 
             if($payload->encriptedFingerprint != $encriptedFingerprint){
@@ -110,8 +112,6 @@ class AccessControlComponent extends Component
             }
             $controller->fingerprint = $encriptedFingerprint;
         }
-
-        $controller = $this->_registry->getController();
 
         $controller->jwtPayload = $payload;
 
