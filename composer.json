@@ -1,5 +1,5 @@
 {
-    "name": "multidots/cakephp-rest-api",
+    "name": "emaildostrider/cakephp-rest-api",
     "description": "CakePHP 3 plugin to provide basic support for building REST API services",
     "keywords": ["cakephp", "rest", "api"],
     "type": "cakephp-plugin",
@@ -12,8 +12,9 @@
             "role": "Author"
         },
         {
-            "name": "Community",
-            "homepage": "https://github.com/multidots/cakephp-rest-api/graphs/contributors"
+            "name": "Jefferson Reis",
+            "homepage": "https://github.com/emaildostrider/cakephp-rest-api",
+            "role": "Forker"
         }
     ],
     "support": {
